@@ -37,7 +37,7 @@ export default ({ mode }: ConfigEnv): UserConfig => {
 		],
 		base: '/',
 		server: {
-			port: 9000,
+			port: 9001,
 			proxy,
 			hmr: {
 				overlay: true
