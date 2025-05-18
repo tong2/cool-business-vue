@@ -105,10 +105,10 @@ const Table = useTable({
 		{ label: '价格', prop: 'price', minWidth: 100 },
 		{ label: '销量', prop: 'sales_volume', minWidth: 100 },
 		{ label: '店铺名', prop: 'shop_name', minWidth: 120 },
-		{ label: '店铺链接', prop: 'shop_link', minWidth: 150 },
+		// { label: '店铺链接', prop: 'shop_link', minWidth: 150 },
 		{ label: '类目ID', prop: 'category_id', minWidth: 100 },
 		{ label: '类目名', prop: 'category_name', minWidth: 120 },
-		{ label: 'SKU ID', prop: 'id', minWidth: 100 },
+		// { label: 'SKU ID', prop: 'id', minWidth: 100 },
 		{ label: 'SKU名称', prop: 'sku_name', minWidth: 120 },
 		{ label: 'SKU图片', prop: 'sku_image', minWidth: 150 },
 		{ label: '原价', prop: 'original_price', minWidth: 100 },
@@ -263,15 +263,37 @@ const handleImportSku = () => {
 	importSkuDialogVisible.value = true;
 };
 
-const beforeUpload = (file: File): boolean => {
+const beforeUpload = (file: File): boolean | Promise<boolean> => {
 	const isXlsx =
 		file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-	const isXls = file.type === 'application/vnd.ms-excel';
-	if (!isXlsx && !isXls) {
-		ElMessage.error('请上传 .xlsx 或 .xls 文件');
+	if (!isXlsx) {
+		ElMessage.error('请上传 .xlsx 文件');
 		return false;
 	}
-	return true;
+
+	// Read first 4 bytes to verify ZIP header
+	return new Promise(resolve => {
+		const reader = new FileReader();
+		reader.onload = e => {
+			const buffer = e.target?.result as ArrayBuffer;
+			const uint8Array = new Uint8Array(buffer.slice(0, 4));
+			const hex = Array.from(uint8Array)
+				.map(b => b.toString(16).padStart(2, '0'))
+				.join('');
+			console.log('Client-side ZIP header:', hex);
+			if (hex.startsWith('504b')) {
+				resolve(true);
+			} else {
+				ElMessage.error('文件不是有效的 .xlsx 格式（无效的 ZIP 头）');
+				resolve(false);
+			}
+		};
+		reader.onerror = () => {
+			ElMessage.error('无法读取文件');
+			resolve(false);
+		};
+		reader.readAsArrayBuffer(file.slice(0, 4));
+	});
 };
 
 const onImportSuccess = (response: any) => {
@@ -315,9 +337,9 @@ const submitEdit = async () => {
 			});
 			try {
 				const response = await axios.post(
-					`${getDynamicPrefix()}/products/finance/productSku/update`,
+					`${getDynamicPrefix()}/products/finance/productSku/updateById`,
 					{
-						skuId: editForm.id,
+						id: editForm.id,
 						manualUnitPrice: editForm.manual_unit_price
 					}
 				);
