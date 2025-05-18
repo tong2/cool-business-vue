@@ -108,7 +108,7 @@ const Table = useTable({
 		// { label: '店铺链接', prop: 'shop_link', minWidth: 150 },
 		{ label: '类目ID', prop: 'category_id', minWidth: 100 },
 		{ label: '类目名', prop: 'category_name', minWidth: 120 },
-		// { label: 'SKU ID', prop: 'id', minWidth: 100 },
+		{ label: 'SKU ID', prop: 'id', minWidth: 100 },
 		{ label: 'SKU名称', prop: 'sku_name', minWidth: 120 },
 		{ label: 'SKU图片', prop: 'sku_image', minWidth: 150 },
 		{ label: '原价', prop: 'original_price', minWidth: 100 },
@@ -176,9 +176,9 @@ const fetchProductMainList = async (params: any) => {
 			return {
 				list: response.data.data.list || [],
 				pagination: {
-					total: response.data.data.total || 0,
-					page: response.data.data.page || 1,
-					size: response.data.data.size || 10
+					total: response.data.data.pagination.total || 0,
+					page: response.data.data.pagination.page || 1,
+					size: response.data.data.pagination.size || 10
 				}
 			};
 		} else {
@@ -321,8 +321,8 @@ const onImportError = (error: any) => {
 };
 
 const handleEdit = (row: any) => {
-	editForm.id = row.id;
-	editForm.manual_unit_price = row.manual_unit_price;
+	editForm.id = row.scope.row.id;
+	editForm.manual_unit_price = row.scope.row.manual_unit_price;
 	editDialogVisible.value = true;
 };
 
@@ -340,7 +340,7 @@ const submitEdit = async () => {
 					`${getDynamicPrefix()}/products/finance/productSku/updateById`,
 					{
 						id: editForm.id,
-						manualUnitPrice: editForm.manual_unit_price
+						manual_unit_price: editForm.manual_unit_price
 					}
 				);
 				loading.close();
